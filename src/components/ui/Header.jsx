@@ -1,22 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
+import { ThemeContext } from '../../App';
 
 const Header = ({ className = '' }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { theme, toggle } = useContext(ThemeContext);
 
   const navigationItems = [
     { name: 'Dashboard', path: '/unified-financial-dashboard', icon: 'LayoutDashboard' },
     { name: 'AI Advisor', path: '/ai-advisor-chat-interface', icon: 'Bot' },
     { name: 'Portfolio', path: '/portfolio-intelligence-center', icon: 'TrendingUp' },
     { name: 'Retirement', path: '/retirement-planning-lab', icon: 'PiggyBank' },
+  { name: 'Invoices', path: '/invoices', icon: 'FileText' },
+  { name: 'Transactions', path: '/transactions', icon: 'Receipt' },
+  { name: 'Expenses', path: '/expenses', icon: 'Wallet' },
   ];
 
   const moreItems = [
     { name: 'Security Center', path: '/security-trust-center', icon: 'Shield' },
+  { name: 'Analytics & Reports', path: '/analytics-reports', icon: 'BarChart3' },
   ];
 
   useEffect(() => {
@@ -44,8 +50,8 @@ const Header = ({ className = '' }) => {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-md border-b border-border' 
-          : 'bg-white border-b border-border'
+          ? 'bg-white/90 dark:bg-background/80 backdrop-blur-md shadow-md border-b border-border' 
+          : 'bg-white dark:bg-background border-b border-border'
       } ${className}`}
     >
       <div className="w-full">
@@ -57,7 +63,7 @@ const Header = ({ className = '' }) => {
             onClick={closeMobileMenu}
           >
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-cultural rounded-lg flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 bg-gradient-cultural rounded-lg flex items-center justify-center shadow-md ring-1 ring-white/20 dark:ring-white/10">
                 <Icon name="Dna" size={24} color="white" strokeWidth={2.5} />
               </div>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-prosperity rounded-full flex items-center justify-center">
@@ -116,6 +122,14 @@ const Header = ({ className = '' }) => {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center space-x-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              iconName={theme === 'dark' ? 'Sun' : 'Moon'}
+              iconSize={18}
+              onClick={toggle}
+              title="Toggle theme"
+            />
             <Button
               variant="ghost"
               size="sm"

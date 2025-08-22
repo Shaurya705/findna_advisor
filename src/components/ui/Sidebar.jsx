@@ -14,6 +14,30 @@ const Sidebar = ({ isCollapsed = false, onToggleCollapse, className = '' }) => {
       icon: 'LayoutDashboard',
       description: 'Overview & insights'
     },
+    {
+      name: 'Invoices',
+      path: '/invoices',
+      icon: 'FileText',
+      description: 'Upload & OCR'
+    },
+    {
+      name: 'Transactions',
+      path: '/transactions',
+      icon: 'Receipt',
+      description: 'Ledger & reconcile'
+    },
+    {
+      name: 'Expenses',
+      path: '/expenses',
+      icon: 'Wallet',
+      description: 'Categorize & track'
+    },
+    {
+      name: 'Analytics',
+      path: '/analytics-reports',
+      icon: 'BarChart3',
+      description: 'Insights & reports'
+    },
     { 
       name: 'AI Advisor', 
       path: '/ai-advisor-chat-interface', 
@@ -56,7 +80,7 @@ const Sidebar = ({ isCollapsed = false, onToggleCollapse, className = '' }) => {
 
   return (
     <aside 
-      className={`fixed left-0 top-16 bottom-0 z-40 bg-white border-r border-border transition-all duration-300 ${
+      className={`fixed left-0 top-16 bottom-0 z-40 bg-white dark:bg-surface border-r border-border transition-all duration-300 ${
         isCollapsed ? 'w-16' : 'w-64'
       } ${className}`}
     >

@@ -88,6 +88,61 @@
     --animation-ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 
+  .dark {
+    /* Core Colors - dark */
+    --color-background: #0B1020; /* near-navy */
+    --color-foreground: #E5E7EB; /* gray-200 */
+    --color-border: #1F2937; /* gray-800 */
+    --color-input: #111827; /* gray-900 */
+    --color-ring: #93C5FD; /* blue-300 */
+
+    /* Cards & Surfaces */
+    --color-card: #0F172A; /* slate-900 */
+    --color-card-foreground: #E5E7EB; /* gray-200 */
+    --color-popover: #0F172A;
+    --color-popover-foreground: #E5E7EB;
+
+    /* Muted */
+    --color-muted: #0B1220; /* subtle bg */
+    --color-muted-foreground: #9CA3AF; /* gray-400 */
+
+    /* Brand stays but adjust contrast */
+    --color-primary: #3B82F6; /* blue-500 */
+    --color-primary-foreground: #0B1020;
+    --color-secondary: #F59E0B; /* amber-500 */
+    --color-secondary-foreground: #0B1020;
+
+    /* State */
+    --color-destructive: #EF4444; /* red-500 */
+    --color-destructive-foreground: #0B1020;
+    --color-accent: #D97706; /* amber-600 */
+    --color-accent-foreground: #0B1020;
+    --color-success: #10B981; /* emerald-500 */
+    --color-success-foreground: #0B1020;
+    --color-warning: #F59E0B; /* amber-500 */
+    --color-warning-foreground: #0B1020;
+    --color-error: #EF4444; /* red-500 */
+    --color-error-foreground: #0B1020;
+
+    /* Cultural */
+    --color-prosperity: #F59E0B;
+    --color-prosperity-foreground: #0B1020;
+    --color-trust: #1E3A8A; /* blue-800 */
+    --color-trust-foreground: #E5E7EB;
+    --color-growth: #EA580C;
+    --color-growth-foreground: #0B1020;
+
+    /* Text */
+    --color-text-primary: #E5E7EB;
+    --color-text-secondary: #9CA3AF;
+    --color-text-muted: #6B7280;
+
+    /* Surfaces */
+    --color-surface: #0F172A;
+    --color-surface-secondary: #0B1220;
+    --color-surface-muted: #0B1220;
+  }
+
   * {
     @apply border-border;
   }

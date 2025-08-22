@@ -105,3 +105,21 @@ npm run build
 - Styled with Tailwind CSS
 
 Built with ❤️ on Rocket.new
+
+## Backend (FastAPI + PostgreSQL + Celery)
+
+Quick start:
+
+1. Copy `backend/.env.example` to `backend/.env` and adjust values.
+2. Create a Python venv, then install: `pip install -r backend/requirements.txt`.
+3. From the `backend/` folder, run the API: `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`.
+4. Optional: start a worker (needs Redis): `celery -A app.tasks.app worker --loglevel=info`.
+
+APIs:
+- POST /auth/token (JWT)
+- POST /api/upload (invoice file -> OCR preview + job id)
+- POST /api/analyze (transactions -> anomalies)
+- POST /api/forecast (revenue -> forecast series)
+- POST /api/advice (chat-based advisory stub)
+
+Database tables (via SQLAlchemy): users, invoices, transactions, expenses, payments, audit_logs.

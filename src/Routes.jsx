@@ -9,6 +9,10 @@ import HomepageAIFinancialAdvisoryPlatform from './pages/homepage-ai-financial-a
 import SecurityTrustCenter from './pages/security-trust-center';
 import AIAdvisorChatInterface from './pages/ai-advisor-chat-interface';
 import RetirementPlanningLab from './pages/retirement-planning-lab';
+import Invoices from './pages/invoices';
+import Transactions from './pages/transactions';
+import Expenses from './pages/expenses';
+import AnalyticsReports from './pages/analytics-reports';
 
 const Routes = () => {
   return (
@@ -24,6 +28,10 @@ const Routes = () => {
         <Route path="/security-trust-center" element={<SecurityTrustCenter />} />
         <Route path="/ai-advisor-chat-interface" element={<AIAdvisorChatInterface />} />
         <Route path="/retirement-planning-lab" element={<RetirementPlanningLab />} />
+  <Route path="/invoices" element={<Invoices />} />
+  <Route path="/transactions" element={<Transactions />} />
+  <Route path="/expenses" element={<Expenses />} />
+  <Route path="/analytics-reports" element={<AnalyticsReports />} />
         <Route path="*" element={<NotFound />} />
       </RouterRoutes>
       </ErrorBoundary>
