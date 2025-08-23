@@ -18,6 +18,13 @@ class Settings(BaseSettings):
 
     gstn_api_key: str | None = Field(default=None, alias="GSTN_API_KEY")
 
+    # LLM providers
+    openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
+    gemini_api_key: str | None = Field(default=None, alias="GEMINI_API_KEY")
+    llm_provider: str | None = Field(default="openai", alias="LLM_PROVIDER")  # "openai" | "gemini"
+    gemini_model: str | None = Field(default="gemini-1.5-flash", alias="GEMINI_MODEL")
+    enable_ai_advisor: bool = Field(default=False, alias="ENABLE_AI_ADVISOR")
+
     class Config:
         env_file = ".env"
         case_sensitive = False

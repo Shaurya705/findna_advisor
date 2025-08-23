@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
 const TaxOptimizationAlerts = ({ alerts, language = 'en' }) => {
+  const navigate = useNavigate();
+
   const content = {
     en: {
       title: 'Tax Optimization Alerts',
@@ -28,16 +31,16 @@ const TaxOptimizationAlerts = ({ alerts, language = 'en' }) => {
     }
   };
 
-  const getAlertColor = (type) => {
+  const getAlertTypeColor = (type) => {
     switch (type) {
-      case 'urgent': return 'text-error bg-error/10 border-error/20';
-      case 'important': return 'text-warning bg-warning/10 border-warning/20';
-      case 'reminder': return 'text-primary bg-primary/10 border-primary/20';
-      default: return 'text-text-secondary bg-muted border-border';
+      case 'urgent': return 'text-error bg-error/10 dark:bg-error/20 border-error/20 dark:border-error/30';
+      case 'important': return 'text-warning bg-warning/10 dark:bg-warning/20 border-warning/20 dark:border-warning/30';
+      case 'reminder': return 'text-primary bg-primary/10 dark:bg-primary/20 border-primary/20 dark:border-primary/30';
+      default: return 'text-text-secondary bg-muted dark:bg-muted/30 border-border dark:border-border/30';
     }
   };
 
-  const getAlertIcon = (type) => {
+  const getAlertTypeIcon = (type) => {
     switch (type) {
       case 'urgent': return 'AlertCircle';
       case 'important': return 'Clock';
@@ -47,17 +50,29 @@ const TaxOptimizationAlerts = ({ alerts, language = 'en' }) => {
   };
 
   const handleTakeAction = (alertId) => {
-    console.log(`Taking action for alert: ${alertId}`);
+    try {
+      navigate('/analytics-reports');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
+  const handleViewAll = () => {
+    try {
+      navigate('/analytics-reports');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition-all duration-300">
+    <div className="bg-white dark:bg-surface dark:bg-opacity-90 rounded-xl border border-border dark:border-border dark:border-opacity-30 p-6 shadow-sm hover:shadow-md dark:shadow-black dark:shadow-opacity-20 transition-all duration-300">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-text-primary">
+          <h3 className="text-lg font-semibold text-text-primary dark:text-white">
             {content?.[language]?.title}
           </h3>
-          <p className="text-sm text-text-secondary">
+          <p className="text-sm text-text-secondary dark:text-text-secondary/80">
             {content?.[language]?.subtitle}
           </p>
         </div>
@@ -69,9 +84,9 @@ const TaxOptimizationAlerts = ({ alerts, language = 'en' }) => {
         {alerts?.map((alert, index) => (
           <div key={index} className="p-4 bg-surface-secondary rounded-lg border border-border/50">
             <div className="flex items-start justify-between mb-3">
-              <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getAlertColor(alert?.type)}`}>
+        <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getAlertTypeColor(alert?.type)}`}>
                 <div className="flex items-center space-x-1">
-                  <Icon name={getAlertIcon(alert?.type)} size={12} />
+          <Icon name={getAlertTypeIcon(alert?.type)} size={12} />
                   <span>{content?.[language]?.[alert?.type]}</span>
                 </div>
               </div>
@@ -136,6 +151,7 @@ const TaxOptimizationAlerts = ({ alerts, language = 'en' }) => {
           iconPosition="right"
           iconSize={16}
           className="text-primary hover:bg-primary/5"
+          onClick={handleViewAll}
         >
           {content?.[language]?.viewAll}
         </Button>

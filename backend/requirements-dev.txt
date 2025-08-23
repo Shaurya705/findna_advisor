@@ -1,0 +1,31 @@
+# Development dependencies for FinVoice Backend
+# These are additional packages needed for development and testing
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+httpx>=0.24.0
+aiohttp>=3.8.0
+
+# Code quality
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.4.0
+
+# Documentation
+mkdocs>=1.5.0
+mkdocs-material>=9.1.0
+
+# Development tools
+python-dotenv>=1.0.0
+watchdog>=3.0.0
+
+# Database tools
+alembic>=1.11.0
+psycopg2-binary>=2.9.0  # For PostgreSQL
+
+# Optional: Jupyter for analysis
+jupyter>=1.0.0
+pandas>=2.0.0
+matplotlib>=3.7.0

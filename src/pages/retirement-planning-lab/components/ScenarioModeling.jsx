@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
+import { computeRetirementProjections, formatCurrencyINR } from '../utils/calculations';
 
 const ScenarioModeling = ({ goalData }) => {
   const [selectedScenario, setSelectedScenario] = useState('moderate');
@@ -20,67 +21,21 @@ const ScenarioModeling = ({ goalData }) => {
     { value: 'comparison', label: 'Scenario Comparison' }
   ];
 
-  // Mock data generation based on goal data
-  const generateProjectionData = (scenario) => {
-    const currentAge = parseInt(goalData?.currentAge || 30);
-    const retirementAge = parseInt(goalData?.retirementAge || 60);
-    const monthlyExpenses = parseInt(goalData?.monthlyExpenses || 50000);
-    const yearsToRetirement = retirementAge - currentAge;
-    
-    const returnRates = {
-      conservative: 0.06,
-      moderate: 0.10,
-      aggressive: 0.14
-    };
-    
-    const inflationRate = 0.06;
-    const retirementCorpus = monthlyExpenses * 12 * 25; // 25 years of expenses
-    const futureValue = retirementCorpus * Math.pow(1 + inflationRate, yearsToRetirement);
-    
-    const monthlyReturn = returnRates?.[scenario] / 12;
-    const totalMonths = yearsToRetirement * 12;
-    const monthlyInvestment = futureValue * monthlyReturn / (Math.pow(1 + monthlyReturn, totalMonths) - 1);
-    
-    const data = [];
-    let corpus = 0;
-    
-    for (let year = 0; year <= yearsToRetirement; year++) {
-      if (year > 0) {
-        corpus = corpus * (1 + returnRates?.[scenario]) + (monthlyInvestment * 12);
-      }
-      
-      data?.push({
-        year: currentAge + year,
-        age: currentAge + year,
-        corpus: Math.round(corpus / 100000) / 10, // In lakhs
-        monthlyInvestment: Math.round(monthlyInvestment / 1000) * 1000,
-        inflationAdjustedExpenses: Math.round(monthlyExpenses * Math.pow(1 + inflationRate, year) / 1000) * 1000
-      });
-    }
-    
-    return { data, monthlyInvestment, futureValue, corpus };
-  };
+  const conservativeData = useMemo(() => computeRetirementProjections(goalData, 'conservative'), [goalData]);
+  const moderateData = useMemo(() => computeRetirementProjections(goalData, 'moderate'), [goalData]);
+  const aggressiveData = useMemo(() => computeRetirementProjections(goalData, 'aggressive'), [goalData]);
 
-  const conservativeData = generateProjectionData('conservative');
-  const moderateData = generateProjectionData('moderate');
-  const aggressiveData = generateProjectionData('aggressive');
-  
   const currentData = selectedScenario === 'conservative' ? conservativeData : 
                      selectedScenario === 'moderate' ? moderateData : aggressiveData;
 
   const comparisonData = conservativeData?.data?.map((item, index) => ({
     age: item?.age,
-    Conservative: item?.corpus,
-    Moderate: moderateData?.data?.[index]?.corpus || 0,
-    Aggressive: aggressiveData?.data?.[index]?.corpus || 0
+    Conservative: item?.corpusLakhs,
+    Moderate: moderateData?.data?.[index]?.corpusLakhs || 0,
+    Aggressive: aggressiveData?.data?.[index]?.corpusLakhs || 0
   }));
 
-  const formatCurrency = (value) => {
-    if (value >= 10000000) return `₹${(value / 10000000)?.toFixed(1)}Cr`;
-    if (value >= 100000) return `₹${(value / 100000)?.toFixed(1)}L`;
-    if (value >= 1000) return `₹${(value / 1000)?.toFixed(0)}K`;
-    return `₹${value}`;
-  };
+  const formatCurrency = formatCurrencyINR;
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload?.length) {
@@ -149,7 +104,7 @@ const ScenarioModeling = ({ goalData }) => {
               <span className="text-sm font-medium text-text-secondary">Final Corpus</span>
             </div>
             <p className="text-2xl font-bold text-prosperity">
-              {formatCurrency(currentData?.corpus)}
+              {formatCurrency(currentData?.finalCorpusRupees)}
             </p>
           </div>
           
@@ -196,7 +151,7 @@ const ScenarioModeling = ({ goalData }) => {
                 <Legend />
                 <Line 
                   type="monotone" 
-                  dataKey="corpus" 
+                  dataKey="corpusLakhs" 
                   stroke="#1e40af" 
                   strokeWidth={3}
                   dot={{ fill: '#1e40af', strokeWidth: 2, r: 4 }}

@@ -1,13 +1,44 @@
 /** @type {import('tailwindcss').Config} */
+const plugin = require('tailwindcss/plugin');
+
 module.exports = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{js,jsx}',
-    './components/**/*.{js,jsx}',
-    './app/**/*.{js,jsx}',
+    './src/pages/**/*.{js,jsx}',
+    './src/components/**/*.{js,jsx}',
+    './src/app/**/*.{js,jsx}',
     './src/**/*.{js,jsx}',
+    './index.html',
   ],
   prefix: "",
+  safelist: [
+    // Add specific classes that use opacity modifiers
+    'bg-surface',
+    'bg-opacity-90',
+    'bg-opacity-80',
+    'bg-opacity-40',
+    'bg-opacity-30',
+    'bg-opacity-20',
+    'bg-opacity-10',
+    'text-opacity-95',
+    'text-opacity-80',
+    'border-opacity-50',
+    'border-opacity-30',
+    'border-opacity-20',
+    'shadow-black',
+    {
+      pattern: /bg-(primary|success|warning|error|muted|surface)\/\d+/,
+      variants: ['hover', 'dark', 'dark:hover'],
+    },
+    {
+      pattern: /border-(primary|success|warning|error|muted|surface)\/\d+/,
+      variants: ['hover', 'dark', 'dark:hover'],
+    },
+    {
+      pattern: /text-(primary|success|warning|error|muted|surface)\/\d+/,
+      variants: ['hover', 'dark', 'dark:hover'],
+    }
+  ],
   theme: {
     container: {
       center: true,
@@ -209,5 +240,46 @@ module.exports = {
     require("tailwindcss-animate"),
     require("@tailwindcss/typography"),
     require("@tailwindcss/forms"),
+    // Custom plugin to handle arbitrary opacity values with custom colors
+    plugin(function({ addUtilities, matchUtilities, theme }) {
+      // This will enable classes like `bg-surface/90` and similar opacity modifiers
+      const opacityValues = {
+        '5': '0.05',
+        '10': '0.1',
+        '20': '0.2',
+        '30': '0.3',
+        '40': '0.4',
+        '50': '0.5',
+        '60': '0.6',
+        '70': '0.7',
+        '80': '0.8',
+        '90': '0.9',
+        '95': '0.95',
+      }
+      
+      const colors = theme('colors');
+      
+      Object.entries(colors).forEach(([colorName, colorValue]) => {
+        if (typeof colorValue === 'string') {
+          Object.entries(opacityValues).forEach(([opacityName, opacityValue]) => {
+            addUtilities({
+              [`.bg-${colorName}\\/${opacityName}`]: {
+                backgroundColor: `color-mix(in srgb, ${colorValue} ${parseFloat(opacityValue) * 100}%, transparent)`
+              },
+              [`.text-${colorName}\\/${opacityName}`]: {
+                color: `color-mix(in srgb, ${colorValue} ${parseFloat(opacityValue) * 100}%, transparent)`
+              },
+              [`.border-${colorName}\\/${opacityName}`]: {
+                borderColor: `color-mix(in srgb, ${colorValue} ${parseFloat(opacityValue) * 100}%, transparent)`
+              },
+              [`.shadow-${colorName}\\/${opacityName}`]: {
+                '--tw-shadow-color': `color-mix(in srgb, ${colorValue} ${parseFloat(opacityValue) * 100}%, transparent)`,
+                '--tw-shadow': 'var(--tw-shadow-colored)'
+              },
+            })
+          })
+        }
+      })
+    }),
   ],
 }

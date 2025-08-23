@@ -4,31 +4,31 @@ import Button from '../../../components/ui/Button';
 
 const ChatHeader = ({ 
   currentLanguage, 
-  onLanguageToggle, 
+  onLanguageChange, 
   isOnline, 
-  aiPersonality,
-  onSettingsClick 
+  onToggleInsightPanel,
+  showInsightPanel
 }) => {
   return (
-    <div className="bg-white border-b border-border p-4 flex items-center justify-between">
+    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 flex items-center justify-between">
       {/* AI Avatar & Status */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-4">
         <div className="relative">
-          <div className="w-12 h-12 bg-gradient-cultural rounded-full flex items-center justify-center shadow-md">
-            <Icon name="Bot" size={24} color="white" strokeWidth={2.5} />
+          <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/30">
+            <Icon name="Bot" size={28} className="text-white" strokeWidth={2.5} />
           </div>
-          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-            isOnline ? 'bg-success' : 'bg-gray-400'
-          }`} />
+          <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-white ${
+            isOnline ? 'bg-green-400' : 'bg-gray-400'
+          } shadow-lg`} />
         </div>
         
         <div>
-          <h2 className="text-lg font-semibold text-text-primary">
+          <h2 className="text-xl font-bold text-white">
             {currentLanguage === 'hi' ? 'फिनडीएनए सलाहकार' : 'FinDNA Advisor'}
           </h2>
-          <p className="text-sm text-text-secondary">
+          <p className="text-blue-100 text-sm font-medium">
             {isOnline 
-              ? (currentLanguage === 'hi' ? 'ऑनलाइन • आपकी मदद के लिए तैयार' : 'Online • Ready to help')
+              ? (currentLanguage === 'hi' ? 'ऑनलाइन • आपकी मदद के लिए तैयार' : 'Online • Ready to help you')
               : (currentLanguage === 'hi' ? 'ऑफलाइन' : 'Offline')
             }
           </p>
@@ -36,37 +36,35 @@ const ChatHeader = ({
       </div>
 
       {/* Controls */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-3">
         {/* Language Toggle */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onLanguageToggle}
-          className="text-text-secondary hover:text-primary"
+        <button
+          onClick={() => onLanguageChange(currentLanguage === 'hi' ? 'en' : 'hi')}
+          className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-200 px-4 py-2 rounded-lg border border-white/30 text-white font-semibold text-sm"
         >
-          <span className="text-sm font-medium">
-            {currentLanguage === 'hi' ? 'EN' : 'हिं'}
+          {currentLanguage === 'hi' ? 'EN' : 'हिं'}
+        </button>
+
+        {/* Insight Panel Toggle */}
+        <button
+          onClick={onToggleInsightPanel}
+          className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-200 p-2.5 rounded-lg border border-white/30 text-white"
+          title={showInsightPanel ? "Hide Insights" : "Show Insights"}
+        >
+          <Icon 
+            name={showInsightPanel ? "SidebarClose" : "SidebarOpen"} 
+            size={18} 
+            className="text-white"
+          />
+        </button>
+
+        {/* AI Status Indicator */}
+        <div className="flex items-center space-x-2 px-3 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg border border-white/30">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <span className="text-xs font-semibold">
+            {currentLanguage === 'hi' ? 'AI सक्रिय' : 'AI Active'}
           </span>
-        </Button>
-
-        {/* Settings */}
-        <Button
-          variant="ghost"
-          size="sm"
-          iconName="Settings"
-          iconSize={18}
-          onClick={onSettingsClick}
-          className="text-text-secondary hover:text-primary"
-        />
-
-        {/* Voice Toggle */}
-        <Button
-          variant="ghost"
-          size="sm"
-          iconName="Mic"
-          iconSize={18}
-          className="text-text-secondary hover:text-primary"
-        />
+        </div>
       </div>
     </div>
   );

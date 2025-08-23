@@ -1,286 +1,377 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
 import Header from '../../components/ui/Header';
+import Icon from '../../components/AppIcon';
 import ChatHeader from './components/ChatHeader';
 import ConversationHistory from './components/ConversationHistory';
 import ChatInput from './components/ChatInput';
 import QuickActionButtons from './components/QuickActionButtons';
 import AIInsightPanel from './components/AIInsightPanel';
-import Icon from '../../components/AppIcon';
+import { useAIChat } from '../../hooks/useAIChat';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AIAdvisorChatInterface = () => {
-  const navigate = useNavigate();
-  const [currentLanguage, setCurrentLanguage] = useState('en');
-  const [messages, setMessages] = useState([]);
-  const [isTyping, setIsTyping] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const [isListening, setIsListening] = useState(false);
-  const [showInsightPanel, setShowInsightPanel] = useState(true);
+	const { isAuthenticated } = useAuth();
+	const {
+		messages,
+		isTyping,
+		loading,
+		error,
+		clearError,
+		sendMessage,
+		handleQuickAction,
+	} = useAIChat();
 
-  // Mock conversation data
-  const sampleConversations = {
-    hi: [
-      {
-        id: 1,
-        sender: 'ai',
-        content: `नमस्ते! मैं आपका व्यक्तिगत वित्तीय सलाहकार हूँ। मैं आपकी निवेश रणनीति, टैक्स प्लानिंग, और रिटायरमेंट की योजना में मदद कर सकता हूँ।\n\nआज मैं आपकी कैसे सहायता कर सकता हूँ?`,
-        timestamp: new Date(Date.now() - 300000),
-        quickActions: [
-          { id: 'portfolio', label: 'पोर्टफोलियो देखें' },
-          { id: 'goals', label: 'लक्ष्य सेट करें' }
-        ]
-      },
-      {
-        id: 2,
-        sender: 'user',
-        content: 'मेरी retirement planning के लिए क्या strategy suggest करेंगे?',
-        timestamp: new Date(Date.now() - 240000)
-      },
-      {
-        id: 3,
-        sender: 'ai',
-        content: `बहुत अच्छा सवाल! आपकी रिटायरमेंट प्लानिंग के लिए मैं निम्नलिखित रणनीति सुझाता हूँ:\n\n🎯 **EPF अनुकूलन**: आपका EPF योगदान अधिकतम करें\n💰 **ELSS निवेश**: टैक्स बचत के साथ इक्विटी एक्सपोज़र\n🏠 **PPF खाता**: 15 साल का लॉक-इन पीरियड, टैक्स फ्री रिटर्न\n📈 **SIP रणनीति**: मासिक ₹15,000 का SIP शुरू करें\n\nआपकी वर्तमान आयु और आय के आधार पर, आप 60 साल की उम्र तक ₹2.5 करोड़ का कॉर्पस बना सकते हैं।`,
-        timestamp: new Date(Date.now() - 180000),
-        quickActions: [
-          { id: 'sip_calculator', label: 'SIP कैलकुलेटर' },
-          { id: 'goal_tracker', label: 'लक्ष्य ट्रैकर' }
-        ]
-      }
-    ],
-    en: [
-      {
-        id: 1,
-        sender: 'ai',
-        content: `Hello! I'm your personal financial advisor powered by AI. I can help you with investment strategies, tax planning, retirement planning, and much more.\n\nHow can I assist you today?`,
-        timestamp: new Date(Date.now() - 300000),
-        quickActions: [
-          { id: 'portfolio', label: 'View Portfolio' },
-          { id: 'goals', label: 'Set Goals' }
-        ]
-      },
-      {
-        id: 2,
-        sender: 'user',
-        content: 'What\'s the best retirement strategy for someone in their 30s?',
-        timestamp: new Date(Date.now() - 240000)
-      },
-      {
-        id: 3,
-        sender: 'ai',
-        content: `Excellent question! For someone in their 30s, here's a comprehensive retirement strategy:\n\n🎯 **Maximize EPF**: Ensure maximum employer contribution\n💰 **ELSS Investments**: Tax-saving equity exposure\n🏠 **PPF Account**: 15-year lock-in with tax-free returns\n📈 **SIP Strategy**: Start with ₹15,000 monthly SIP\n🏥 **Health Insurance**: Adequate coverage for medical emergencies\n\nWith your current age and income profile, you can build a corpus of ₹2.5 crores by age 60 with disciplined investing.`,
-        timestamp: new Date(Date.now() - 180000),
-        quickActions: [
-          { id: 'sip_calculator', label: 'SIP Calculator' },
-          { id: 'goal_tracker', label: 'Goal Tracker' }
-        ]
-      }
-    ]
-  };
+	const [currentLanguage, setCurrentLanguage] = useState('en');
+	const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+		const [showInsightPanel, setShowInsightPanel] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1280 : true));
+		const [quickActionsVisible, setQuickActionsVisible] = useState(false); // default collapsed for more chat height
+		const [quickActionsDock, setQuickActionsDock] = useState('bottom'); // 'top' | 'bottom'
 
-  // Initialize with sample conversation
-  useEffect(() => {
-    setMessages(sampleConversations?.[currentLanguage] || []);
-  }, [currentLanguage]);
+	// Speech features
+	const [isListening, setIsListening] = useState(false);
+	const [enableTTS, setEnableTTS] = useState(false);
+	const recognitionRef = useRef(null);
+	const pendingTranscriptRef = useRef('');
+	const [liveTranscript, setLiveTranscript] = useState('');
 
-  const handleLanguageToggle = () => {
-    const newLanguage = currentLanguage === 'hi' ? 'en' : 'hi';
-    setCurrentLanguage(newLanguage);
-    localStorage.setItem('preferredLanguage', newLanguage);
-  };
+	// Online/offline status
+	useEffect(() => {
+		const on = () => setIsOnline(true);
+		const off = () => setIsOnline(false);
+		window.addEventListener('online', on);
+		window.addEventListener('offline', off);
+		return () => {
+			window.removeEventListener('online', on);
+			window.removeEventListener('offline', off);
+		};
+	}, []);
 
-  const handleSendMessage = (content) => {
-    const userMessage = {
-      id: Date.now(),
-      sender: 'user',
-      content,
-      timestamp: new Date()
-    };
+	// Responsive insight panel behavior
+	useEffect(() => {
+		const handleResize = () => setShowInsightPanel(window.innerWidth >= 1280);
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
 
-    setMessages(prev => [...prev, userMessage]);
-    setIsTyping(true);
+	const onLanguageChange = (lang) => setCurrentLanguage(lang);
+	const onToggleInsightPanel = () => setShowInsightPanel((v) => !v);
+		const toggleQuickActions = () => setQuickActionsVisible((v) => !v);
+		const toggleQuickDock = () => setQuickActionsDock((d) => (d === 'top' ? 'bottom' : 'top'));
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(content);
-      setMessages(prev => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 2000 + Math.random() * 2000);
-  };
+	// Text-to-Speech for latest AI message with improved voice quality
+	useEffect(() => {
+		if (!enableTTS || !('speechSynthesis' in window)) return;
+		if (!messages || messages.length === 0) return;
+		const last = messages[messages.length - 1];
+		if (last.sender === 'ai' && last.content) {
+			try {
+				// Cancel any ongoing speech
+				window.speechSynthesis.cancel();
+				
+				// Create utterance
+				const utter = new SpeechSynthesisUtterance(last.content);
+				
+				// Set language based on current selection
+				utter.lang = currentLanguage === 'hi' ? 'hi-IN' : 'en-US';
+				
+				// Get available voices
+				const voices = window.speechSynthesis.getVoices();
+				
+				// Try to find a high-quality voice
+				let selectedVoice = null;
+				
+				// Preferred voice names by language
+				const preferredVoices = {
+					'en-US': ['Google US English', 'Microsoft David', 'Alex', 'Samantha'],
+					'hi-IN': ['Google हिन्दी', 'Microsoft Hemant', 'Microsoft Kalpana']
+				};
+				
+				// Try to find preferred voice
+				if (voices && voices.length > 0) {
+					const langKey = currentLanguage === 'hi' ? 'hi-IN' : 'en-US';
+					for (const preferred of preferredVoices[langKey]) {
+						const match = voices.find(v => v.name.includes(preferred));
+						if (match) {
+							selectedVoice = match;
+							break;
+						}
+					}
+					
+					// Fallback to any voice in the right language
+					if (!selectedVoice) {
+						selectedVoice = voices.find(v => v.lang.includes(langKey));
+					}
+					
+					// Set the selected voice
+					if (selectedVoice) {
+						utter.voice = selectedVoice;
+					}
+				}
+				
+				// Improve speech parameters
+				utter.rate = 1.0;     // Normal speaking rate
+				utter.pitch = 1.0;    // Normal pitch
+				utter.volume = 1.0;   // Full volume
+				
+				// Add event handlers for better UX
+				utter.onstart = () => {
+					// Could add visual indicator that TTS is active
+				};
+				
+				utter.onend = () => {
+					// Could remove visual indicator
+				};
+				
+				utter.onerror = (e) => {
+					console.error('TTS error:', e);
+				};
+				
+				// Speak the text
+				window.speechSynthesis.speak(utter);
+			} catch (e) { 
+				console.error('TTS failed:', e);
+			}
+		}
+	}, [messages, enableTTS, currentLanguage]);
 
-  const generateAIResponse = (userMessage) => {
-    const responses = {
-      hi: {
-        portfolio: `आपका पोर्टफोलियो विश्लेषण:\n\n📊 **कुल निवेश**: ₹8,50,000\n📈 **वर्तमान मूल्य**: ₹9,75,000 (+14.7%)\n🎯 **एसेट एलोकेशन**: 70% इक्विटी, 30% डेट\n\n**सुझाव**: आपका पोर्टफोलियो अच्छा प्रदर्शन कर रहा है। मिड-कैप एक्सपोज़र बढ़ाने पर विचार करें।`,
-        tax: `टैक्स बचत के अवसर:\n\n💰 **80C**: ₹1,50,000 की सीमा में से ₹45,000 बचा है\n🏥 **80D**: हेल्थ इंश्योरेंस प्रीमियम के लिए ₹25,000\n🏠 **होम लोन**: ब्याज पर ₹2,00,000 तक की छूट\n\n**कुल बचत संभावना**: ₹31,200`,
-        goals: `आइए आपके वित्तीय लक्ष्य निर्धारित करते हैं:\n\n🏠 **घर खरीदना**: 5 साल में ₹50 लाख\n🎓 **बच्चों की शिक्षा**: 15 साल में ₹25 लाख\n✈️ **रिटायरमेंट**: 25 साल में ₹2 करोड़\n\nक्या आप इन लक्ष्यों के लिए SIP शुरू करना चाहेंगे?`,
-        market: `आज के मुख्य बाजार अपडेट:\n\n📈 **सेंसेक्स**: +245 पॉइंट्स (0.42%)\n📊 **निफ्टी**: +78 पॉइंट्स (0.45%)\n💼 **सेक्टर**: IT और फार्मा में तेजी\n🌍 **ग्लोबल**: US मार्केट में सकारात्मक रुझान\n\n**सुझाव**: IT स्टॉक्स में निवेश का अच्छा समय है।`
-      },
-      en: {
-        portfolio: `Your Portfolio Analysis:\n\n📊 **Total Investment**: ₹8,50,000\n📈 **Current Value**: ₹9,75,000 (+14.7%)\n🎯 **Asset Allocation**: 70% Equity, 30% Debt\n\n**Recommendation**: Your portfolio is performing well. Consider increasing mid-cap exposure for better growth potential.`,
-        tax: `Tax Saving Opportunities:\n\n💰 **80C**: ₹45,000 remaining out of ₹1,50,000 limit\n🏥 **80D**: ₹25,000 for health insurance premium\n🏠 **Home Loan**: Up to ₹2,00,000 interest deduction\n\n**Total Potential Savings**: ₹31,200`,
-        goals: `Let's set your financial goals:\n\n🏠 **Home Purchase**: ₹50 lakhs in 5 years\n🎓 **Children's Education**: ₹25 lakhs in 15 years\n✈️ **Retirement**: ₹2 crores in 25 years\n\nWould you like to start SIPs for these goals?`,
-        market: `Today's Key Market Updates:\n\n📈 **Sensex**: +245 points (0.42%)\n📊 **Nifty**: +78 points (0.45%)\n💼 **Sectors**: IT and Pharma leading gains\n🌍 **Global**: Positive sentiment from US markets\n\n**Suggestion**: Good time to invest in IT stocks.`
-      }
-    };
+	// Initialize / cleanup speech recognition
+	useEffect(() => {
+		return () => {
+			if (recognitionRef.current) {
+				try { recognitionRef.current.stop(); } catch (_) {}
+			}
+			if ('speechSynthesis' in window) {
+				window.speechSynthesis.cancel();
+			}
+		};
+	}, []);
 
-    const lang = currentLanguage;
-    let responseContent = '';
+	const handleVoiceInputToggle = (next) => {
+		const shouldStart = typeof next === 'boolean' ? next : !isListening;
+		if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+			// Browser not supported
+			setIsListening(false);
+			return;
+		}
+		if (shouldStart) {
+			try {
+				const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+				const recog = new SR();
+				
+				// Configure speech recognition
+				recog.lang = currentLanguage === 'hi' ? 'hi-IN' : 'en-US';
+				recog.interimResults = true;  // Get results as you speak
+				recog.continuous = true;      // Don't stop after silence
+				recog.maxAlternatives = 3;    // Get multiple alternatives for better accuracy
+				
+				// Clear any previous transcript
+				pendingTranscriptRef.current = '';
+				
+				// Handle results as they come in
+				recog.onresult = (e) => {
+					// Collect all results
+					let interimTranscript = '';
+					let finalTranscript = '';
+					
+					for (let i = e.resultIndex; i < e.results.length; i++) {
+						const transcript = e.results[i][0].transcript;
+						if (e.results[i].isFinal) {
+							finalTranscript += transcript;
+						} else {
+							interimTranscript += transcript;
+						}
+					}
+					
+					// Update the combined transcript
+					const combinedTranscript = (pendingTranscriptRef.current + ' ' + finalTranscript).trim() + 
+						(interimTranscript ? ' ' + interimTranscript : '');
+					
+					// Store final parts in the ref for persistence
+					if (finalTranscript) {
+						pendingTranscriptRef.current = (pendingTranscriptRef.current + ' ' + finalTranscript).trim();
+					}
+					
+					// Update the live display
+					setLiveTranscript(combinedTranscript);
+				};
+				
+				// Handle end of recognition
+				recog.onend = () => {
+					setIsListening(false);
+					const finalText = pendingTranscriptRef.current?.trim();
+					if (finalText) {
+						// Send the message
+						onSendMessage(finalText);
+						// Clear the transcript
+						pendingTranscriptRef.current = '';
+						setLiveTranscript('');
+					}
+				};
+				
+				// Handle errors
+				recog.onerror = (event) => {
+					console.error('Speech recognition error', event.error);
+					setIsListening(false);
+				};
+				
+				// Handle no-speech timeout
+				recog.onnomatch = () => {
+					setIsListening(false);
+				};
+				
+				// Store the recognition instance and start it
+				recognitionRef.current = recog;
+				recog.start();
+				setIsListening(true);
+			} catch (error) {
+				console.error('Failed to start speech recognition', error);
+				setIsListening(false);
+			}
+		} else {
+			// Stop recognition if it's active
+			try { 
+				if (recognitionRef.current) {
+					recognitionRef.current.stop(); 
+				}
+			} catch (error) {
+				console.error('Error stopping recognition', error);
+			}
+			setIsListening(false);
+			setLiveTranscript('');
+		}
+	};
 
-    if (userMessage?.toLowerCase()?.includes('portfolio') || userMessage?.includes('पोर्टफोलियो')) {
-      responseContent = responses?.[lang]?.portfolio;
-    } else if (userMessage?.toLowerCase()?.includes('tax') || userMessage?.includes('टैक्स')) {
-      responseContent = responses?.[lang]?.tax;
-    } else if (userMessage?.toLowerCase()?.includes('goal') || userMessage?.includes('लक्ष्य')) {
-      responseContent = responses?.[lang]?.goals;
-    } else if (userMessage?.toLowerCase()?.includes('market') || userMessage?.includes('मार्केट')) {
-      responseContent = responses?.[lang]?.market;
-    } else {
-      responseContent = lang === 'hi' 
-        ? `मैं आपके सवाल को समझ गया हूँ। आपकी वित्तीय स्थिति के आधार पर, मैं निम्नलिखित सुझाव देता हूँ:\n\n• अपने निवेश को diversify करें\n• Emergency fund बनाए रखें\n• Regular SIP जारी रखें\n\nक्या आप किसी विशिष्ट विषय पर और जानकारी चाहते हैं?`
-        : `I understand your question. Based on your financial profile, here are my recommendations:\n\n• Diversify your investments\n• Maintain an emergency fund\n• Continue regular SIPs\n\nWould you like more information on any specific topic?`;
-    }
+	const onSendMessage = (content) => {
+		if (!content?.trim() || isTyping) return;
+		sendMessage(content.trim());
+	};
 
-    return {
-      id: Date.now() + 1,
-      sender: 'ai',
-      content: responseContent,
-      timestamp: new Date(),
-      quickActions: [
-        { id: 'details', label: lang === 'hi' ? 'और जानकारी' : 'More Details' },
-        { id: 'implement', label: lang === 'hi' ? 'लागू करें' : 'Implement' }
-      ]
-    };
-  };
+	// Normalize quick action from various components
+	const onQuickAction = (action) => {
+		const id = typeof action === 'string' ? action : action?.id;
+		if (!id) return;
+		handleQuickAction(id);
+	};
 
-  const handleQuickAction = (action) => {
-    if (typeof action === 'string') {
-      // Handle string actions from quick action buttons
-      const actionMessages = {
-        portfolio: currentLanguage === 'hi' ? 'मेरा पोर्टफोलियो दिखाएं' : 'Show my portfolio',
-        tax: currentLanguage === 'hi' ? 'टैक्स बचत के तरीके बताएं' : 'Tell me about tax saving options',
-        goals: currentLanguage === 'hi' ? 'वित्तीय लक्ष्य सेट करना चाहता हूँ' : 'I want to set financial goals',
-        market: currentLanguage === 'hi' ? 'आज के मार्केट अपडेट दें' : 'Give me today\'s market updates'
-      };
-      
-      if (actionMessages?.[action]) {
-        handleSendMessage(actionMessages?.[action]);
-      }
-    } else if (action?.id) {
-      // Handle action objects from chat messages
-      const actionMessages = {
-        portfolio: currentLanguage === 'hi' ? 'पोर्टफोलियो विस्तार से दिखाएं' : 'Show detailed portfolio',
-        goals: currentLanguage === 'hi' ? 'लक्ष्य निर्धारण शुरू करें' : 'Start goal setting',
-        sip_calculator: currentLanguage === 'hi' ? 'SIP कैलकुलेटर खोलें' : 'Open SIP calculator',
-        goal_tracker: currentLanguage === 'hi' ? 'लक्ष्य ट्रैकर दिखाएं' : 'Show goal tracker',
-        details: currentLanguage === 'hi' ? 'इसके बारे में और बताएं' : 'Tell me more about this',
-        implement: currentLanguage === 'hi' ? 'इसे कैसे लागू करूं?' : 'How do I implement this?'
-      };
+	const onViewInsightDetails = (id) => {
+		// For now, route insight clicks into contextual chat prompts
+		onSendMessage(`Give me more details about ${id?.replace('_', ' ')}`);
+	};
 
-      if (actionMessages?.[action?.id]) {
-        handleSendMessage(actionMessages?.[action?.id]);
-      }
-    }
-  };
+	return (
+		<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+			{/* Global site header */}
+			<Header />
 
-  const handleVoiceInput = (isRecording) => {
-    setIsListening(isRecording);
-    if (isRecording) {
-      // Simulate voice recognition
-      setTimeout(() => {
-        const voiceMessages = currentLanguage === 'hi' 
-          ? ['मेरा पोर्टफोलियो कैसा चल रहा है?', 'टैक्स बचाने के तरीके बताएं', 'SIP कितना करना चाहिए?']
-          : ['How is my portfolio performing?', 'Tell me about tax saving options', 'What should be my SIP amount?'];
-        
-        const randomMessage = voiceMessages?.[Math.floor(Math.random() * voiceMessages?.length)];
-        handleSendMessage(randomMessage);
-        setIsListening(false);
-      }, 3000);
-    }
-  };
+			{/* Page content */}
+			<main className="pt-16 flex flex-col h-[calc(100vh-0px)]">
+				{/* Chat top bar */}
+				<ChatHeader
+					currentLanguage={currentLanguage}
+					onLanguageChange={onLanguageChange}
+					isOnline={isOnline}
+					onToggleInsightPanel={onToggleInsightPanel}
+					showInsightPanel={showInsightPanel}
+				/>
 
-  const handleSettingsClick = () => {
-    console.log('Settings clicked');
-  };
+				{/* Error banner */}
+				{error && (
+					<div className="px-4 sm:px-6 lg:px-8 mt-4">
+						<div className="rounded-xl border border-red-200 bg-red-50 text-red-800 p-3 flex items-start justify-between shadow-sm">
+							<div className="text-sm font-medium">{error}</div>
+							<button onClick={clearError} className="text-xs font-semibold underline">Dismiss</button>
+						</div>
+					</div>
+				)}
 
-  const handleViewDetails = (insightId) => {
-    const detailMessages = {
-      portfolio_health: currentLanguage === 'hi' ? 'पोर्टफोलियो स्वास्थ्य की विस्तृत रिपोर्ट दें' : 'Give detailed portfolio health report',
-      tax_optimization: currentLanguage === 'hi' ? 'टैक्स अनुकूलन की रणनीति बताएं' : 'Explain tax optimization strategy',
-      goal_progress: currentLanguage === 'hi' ? 'लक्ष्य प्रगति का विश्लेषण करें' : 'Analyze goal progress'
-    };
+				{/* Main chat area */}
+						<div className="flex-1 flex min-h-0">
+					{/* Conversation/messages */}
+							<section className="relative flex-1 min-w-0 bg-white/90 backdrop-blur-xl border-t border-gray-200">
+								{/* Floating controls for Quick Actions */}
+								<div className="pointer-events-none absolute right-4 bottom-28 z-10 flex flex-col gap-2">
+									<button
+										onClick={toggleQuickActions}
+										className="pointer-events-auto p-3 rounded-xl bg-white/90 border border-gray-200 shadow-md hover:shadow-lg hover:bg-white transition"
+										title={quickActionsVisible ? 'Hide quick actions' : 'Show quick actions'}
+									>
+										<Icon name={quickActionsVisible ? 'MinusSquare' : 'PlusSquare'} size={18} className="text-gray-700" />
+									</button>
+									<button
+										onClick={toggleQuickDock}
+										className="pointer-events-auto p-3 rounded-xl bg-white/90 border border-gray-200 shadow-md hover:shadow-lg hover:bg-white transition"
+										title={`Dock quick actions ${quickActionsDock === 'top' ? 'bottom' : 'top'}`}
+									>
+										<Icon name={quickActionsDock === 'top' ? 'ArrowDownWideNarrow' : 'ArrowUpNarrowWide'} size={18} className="text-gray-700" />
+									</button>
+									{/* TTS toggle */}
+									<button
+										onClick={() => setEnableTTS((v) => !v)}
+										className={`pointer-events-auto p-3 rounded-xl border shadow-md transition ${enableTTS ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white/90 text-gray-700 border-gray-200 hover:shadow-lg hover:bg-white'}`}
+										title={enableTTS ? 'Disable voice playback' : 'Enable voice playback'}
+									>
+										<Icon name="Volume2" size={18} />
+									</button>
+								</div>
 
-    if (detailMessages?.[insightId]) {
-      handleSendMessage(detailMessages?.[insightId]);
-    }
-  };
+								<div className="h-full flex flex-col">
+									{/* Quick actions docked at top */}
+									{quickActionsVisible && quickActionsDock === 'top' && (
+										<div className="border-b border-gray-200">
+											<div className="max-h-64 overflow-y-auto">
+												<QuickActionButtons
+													currentLanguage={currentLanguage}
+													onQuickAction={onQuickAction}
+												/>
+											</div>
+										</div>
+									)}
+							{/* Messages list */}
+							<ConversationHistory
+								messages={messages}
+								currentLanguage={currentLanguage}
+								onQuickAction={onQuickAction}
+								isTyping={isTyping}
+							/>
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <div className="pt-16 h-screen flex">
-        {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
-          <ChatHeader
-            currentLanguage={currentLanguage}
-            onLanguageToggle={handleLanguageToggle}
-            isOnline={isOnline}
-            onSettingsClick={handleSettingsClick}
-            aiPersonality={{
-              name: currentLanguage === 'hi' ? 'वित्तीय सलाहकार' : 'Financial Advisor',
-              type: 'expert',
-              expertise: ['investment', 'tax-planning', 'retirement']
-            }}
-          />
-          
-          <ConversationHistory
-            messages={messages}
-            currentLanguage={currentLanguage}
-            onQuickAction={handleQuickAction}
-            isTyping={isTyping}
-          />
-          
-          <QuickActionButtons
-            currentLanguage={currentLanguage}
-            onQuickAction={handleQuickAction}
-          />
-          
-          <ChatInput
-            currentLanguage={currentLanguage}
-            onSendMessage={handleSendMessage}
-            isTyping={isTyping}
-            onVoiceInput={handleVoiceInput}
-            isListening={isListening}
-          />
-        </div>
+											{/* Quick actions docked at bottom */}
+											{quickActionsVisible && quickActionsDock === 'bottom' && (
+												<div className="border-t border-gray-200">
+													<div className="max-h-64 overflow-y-auto">
+														<QuickActionButtons
+															currentLanguage={currentLanguage}
+															onQuickAction={onQuickAction}
+														/>
+													</div>
+												</div>
+											)}
 
-        {/* AI Insight Panel */}
-        {showInsightPanel && (
-          <AIInsightPanel
-            currentLanguage={currentLanguage}
-            onViewDetails={handleViewDetails}
-            userProfile={{
-              age: 32,
-              income: 850000,
-              riskTolerance: 'moderate',
-              investmentGoals: ['retirement', 'home-purchase', 'education']
-            }}
-          />
-        )}
+							{/* Chat input */}
+							<ChatInput
+								currentLanguage={currentLanguage}
+								onSendMessage={onSendMessage}
+								isTyping={isTyping}
+								onVoiceInput={handleVoiceInputToggle}
+								isListening={isListening}
+								initialText={liveTranscript}
+							/>
+						</div>
+					</section>
 
-        {/* Toggle Insight Panel Button */}
-        <button
-          onClick={() => setShowInsightPanel(!showInsightPanel)}
-          className="fixed right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50"
-        >
-          <Icon 
-            name={showInsightPanel ? "ChevronRight" : "ChevronLeft"} 
-            size={20} 
-          />
-        </button>
-      </div>
-    </div>
-  );
+					{/* Insights side panel (xl+) */}
+					{showInsightPanel && (
+						<aside className="hidden xl:block">
+							<AIInsightPanel
+								currentLanguage={currentLanguage}
+								userProfile={isAuthenticated ? {} : null}
+								onViewDetails={onViewInsightDetails}
+							/>
+						</aside>
+					)}
+				</div>
+			</main>
+		</div>
+	);
 };
 
 export default AIAdvisorChatInterface;

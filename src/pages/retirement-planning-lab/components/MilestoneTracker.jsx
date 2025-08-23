@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { computeRetirementProjections, formatCurrencyINR } from '../utils/calculations';
 
 const MilestoneTracker = ({ goalData }) => {
   const [selectedMilestone, setSelectedMilestone] = useState(null);
@@ -9,7 +10,8 @@ const MilestoneTracker = ({ goalData }) => {
   const currentAge = parseInt(goalData?.currentAge || 30);
   const retirementAge = parseInt(goalData?.retirementAge || 60);
   const yearsToRetirement = retirementAge - currentAge;
-  const monthlyInvestment = 25000; // Mock value
+  const projections = useMemo(() => computeRetirementProjections(goalData, goalData?.riskTolerance || 'moderate'), [goalData]);
+  const monthlyInvestment = Math.round(projections.monthlyInvestment);
 
   // Generate milestone data
   const generateMilestones = () => {
@@ -68,12 +70,7 @@ const MilestoneTracker = ({ goalData }) => {
   const upcomingMilestones = milestones?.filter(m => m?.isUpcoming && !m?.isCompleted);
   const nextMilestone = milestones?.find(m => !m?.isCompleted);
 
-  const formatCurrency = (value) => {
-    if (value >= 10000000) return `₹${(value / 10000000)?.toFixed(1)}Cr`;
-    if (value >= 100000) return `₹${(value / 100000)?.toFixed(1)}L`;
-    if (value >= 1000) return `₹${(value / 1000)?.toFixed(0)}K`;
-    return `₹${value}`;
-  };
+  const formatCurrency = formatCurrencyINR;
 
   const getProgressPercentage = (current, target) => {
     return Math.min(100, (current / target) * 100);

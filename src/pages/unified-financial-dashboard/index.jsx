@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import Header from '../../components/ui/Header';
-import Sidebar from '../../components/ui/Sidebar';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Import all dashboard components
 import FinancialHealthScore from './components/FinancialHealthScore';
@@ -11,19 +11,30 @@ import PortfolioOverview from './components/PortfolioOverview';
 import MarketOverview from './components/MarketOverview';
 import AIInsightsPanel from './components/AIInsightsPanel';
 import TaxOptimizationAlerts from './components/TaxOptimizationAlerts';
-import GoalTracker from './components/GoalTracker';
 import RetirementProgress from './components/RetirementProgress';
-import QuickActions from './components/QuickActions';
 
 const UnifiedFinancialDashboard = () => {
   const [language, setLanguage] = useState('en');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { user } = useAuth();
+
+  // Get user's first name for greeting
+  const getUserFirstName = () => {
+    if (!user?.full_name) return 'User';
+    return user.full_name.split(' ')[0];
+  };
 
   // Load language preference from localStorage
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') || 'en';
-    setLanguage(savedLanguage);
+    try {
+      const savedLanguage = localStorage.getItem('language') || 'en';
+      setLanguage(savedLanguage);
+    } catch (error) {
+      console.error('Error loading language preference:', error);
+      setLanguage('en');
+    }
   }, []);
 
   // Update current time every minute
@@ -34,15 +45,31 @@ const UnifiedFinancialDashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Simulate loading data
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setLoading(false);
+      } catch (error) {
+        setError('Failed to load dashboard data');
+        setLoading(false);
+      }
+    };
+    
+    loadDashboardData();
+  }, []);
+
   // Handle language change
   const handleLanguageChange = (newLanguage) => {
-    setLanguage(newLanguage);
-    localStorage.setItem('language', newLanguage);
-  };
-
-  // Toggle sidebar collapse
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
+    try {
+      setLanguage(newLanguage);
+      localStorage.setItem('language', newLanguage);
+    } catch (error) {
+      console.error('Error saving language preference:', error);
+    }
   };
 
   // Mock data for dashboard components
@@ -189,23 +216,68 @@ const UnifiedFinancialDashboard = () => {
     return 'Good evening';
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-16">
+          <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 max-w-7xl mx-auto">
+            <div className="flex items-center justify-center h-96">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-text-secondary">
+                  {language === 'hi' ? 'डैशबोर्ड लोड हो रहा है...' : 'Loading dashboard...'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-16">
+          <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 max-w-7xl mx-auto">
+            <div className="flex items-center justify-center h-96">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Icon name="AlertCircle" size={32} />
+                </div>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">
+                  {language === 'hi' ? 'कुछ गलत हुआ' : 'Something went wrong'}
+                </h3>
+                <p className="text-text-secondary mb-4">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  {language === 'hi' ? 'पुनः प्रयास करें' : 'Try Again'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background dark:bg-[#07091c]">
       <Header />
-      <Sidebar 
-        isCollapsed={isSidebarCollapsed} 
-        onToggleCollapse={toggleSidebar}
-      />
-      <main className={`pt-16 transition-all duration-300 ${
-        isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-      }`}>
-        <div className="p-4 sm:p-6 lg:p-8">
+      <main className="pt-16">
+        <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 max-w-7xl mx-auto">
           {/* Dashboard Header */}
-          <div className="mb-8">
+          <div className="mb-10">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
               <div>
                 <h1 className="text-3xl font-bold text-text-primary mb-2">
-                  {getGreeting()}, Rajesh! 👋
+                  {getGreeting()}, {getUserFirstName()}! 👋
                 </h1>
                 <p className="text-text-secondary">
                   {content?.[language]?.welcomeBack}
@@ -214,11 +286,11 @@ const UnifiedFinancialDashboard = () => {
               
               <div className="flex items-center space-x-4 mt-4 sm:mt-0">
                 {/* Language Toggle */}
-                <div className="flex items-center space-x-2 bg-white rounded-lg border border-border p-1">
+                <div className="flex items-center space-x-2 bg-white dark:bg-surface rounded-lg border border-border dark:border-border/40 p-1">
                   <button
                     onClick={() => handleLanguageChange('en')}
                     className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      language === 'en' ?'bg-primary text-white' :'text-text-secondary hover:text-primary'
+                      language === 'en' ? 'bg-primary text-white dark:bg-primary/80' : 'text-text-secondary dark:text-text-secondary/90 hover:text-primary dark:hover:text-primary/90'
                     }`}
                   >
                     EN
@@ -226,30 +298,12 @@ const UnifiedFinancialDashboard = () => {
                   <button
                     onClick={() => handleLanguageChange('hi')}
                     className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      language === 'hi' ?'bg-primary text-white' :'text-text-secondary hover:text-primary'
+                      language === 'hi' ? 'bg-primary text-white dark:bg-primary/80' : 'text-text-secondary dark:text-text-secondary/90 hover:text-primary dark:hover:text-primary/90'
                     }`}
                   >
                     हिं
                   </button>
                 </div>
-
-                {/* Action Buttons */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  iconName="Bell"
-                  iconSize={18}
-                  className="relative"
-                >
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-growth rounded-full"></span>
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  iconName="Settings"
-                  iconSize={18}
-                />
               </div>
             </div>
 
@@ -267,9 +321,9 @@ const UnifiedFinancialDashboard = () => {
           </div>
 
           {/* Dashboard Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left Column - Main Widgets */}
-            <div className="lg:col-span-8 space-y-6">
+            <div className="lg:col-span-8 space-y-8">
               {/* Top Row - Key Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FinancialHealthScore 
@@ -284,17 +338,15 @@ const UnifiedFinancialDashboard = () => {
               </div>
 
               {/* Market Overview */}
-              <MarketOverview 
-                marketData={mockMarketData}
-                language={language}
-              />
-
-              {/* Goals and Retirement */}
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <GoalTracker 
-                  goals={mockGoals}
+              <div className="w-full">
+                <MarketOverview 
+                  marketData={mockMarketData}
                   language={language}
                 />
+              </div>
+
+              {/* Retirement */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 <RetirementProgress 
                   retirementData={mockRetirementData}
                   language={language}
@@ -312,16 +364,15 @@ const UnifiedFinancialDashboard = () => {
                 alerts={mockTaxAlerts}
                 language={language}
               />
-              <QuickActions language={language} />
             </div>
           </div>
 
           {/* Navigation Links */}
-          <div className="mt-12 p-6 bg-white rounded-xl border border-border">
-            <h3 className="text-lg font-semibold text-text-primary mb-4">
+          <div className="mt-16 p-8 bg-white dark:bg-surface dark:bg-opacity-80 rounded-xl border border-border dark:border-border dark:border-opacity-30 shadow-sm dark:shadow-black dark:shadow-opacity-20">
+            <h3 className="text-xl font-semibold text-text-primary dark:text-white mb-6">
               {language === 'hi' ? 'अन्य सेवाएं' : 'Explore More'}
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
               {[
                 { name: language === 'hi' ? 'होम' : 'Home', path: '/homepage-ai-financial-advisory-platform', icon: 'Home' },
                 { name: language === 'hi' ? 'AI सलाहकार' : 'AI Advisor', path: '/ai-advisor-chat-interface', icon: 'Bot' },
@@ -332,12 +383,12 @@ const UnifiedFinancialDashboard = () => {
                 <Link
                   key={item?.path}
                   to={item?.path}
-                  className="flex flex-col items-center p-4 bg-surface-secondary hover:bg-surface-muted rounded-lg border border-border/50 transition-all duration-200 hover:shadow-sm group"
+                  className="flex flex-col items-center p-6 bg-surface-secondary dark:bg-surface dark:hover:bg-primary dark:hover:bg-opacity-10 hover:bg-surface-muted rounded-xl border border-border border-opacity-50 dark:border-border dark:border-opacity-20 transition-all duration-200 hover:shadow-md dark:hover:shadow-black dark:hover:shadow-opacity-30 hover:-translate-y-1 group"
                 >
-                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-200">
-                    <Icon name={item?.icon} size={20} />
+                  <div className="w-14 h-14 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary/90 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200">
+                    <Icon name={item?.icon} size={22} />
                   </div>
-                  <span className="text-sm font-medium text-text-primary text-center">
+                  <span className="text-sm font-medium text-text-primary dark:text-white text-center leading-tight">
                     {item?.name}
                   </span>
                 </Link>

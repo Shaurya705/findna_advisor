@@ -1,11 +1,10 @@
 import React, { createContext, useEffect, useMemo, useState } from "react";
 import Routes from "./Routes";
+import { AuthProvider } from "./contexts/AuthContext";
 
-export const AuthContext = createContext({ token: null, setToken: () => {} });
 export const ThemeContext = createContext({ theme: 'light', toggle: () => {} });
 
 function App() {
-  const [token, setToken] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
@@ -14,15 +13,14 @@ function App() {
   }, [theme]);
 
   const toggle = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
-  const authValue = useMemo(() => ({ token, setToken }), [token]);
   const themeValue = useMemo(() => ({ theme, toggle }), [theme]);
 
   return (
-    <AuthContext.Provider value={authValue}>
+    <AuthProvider>
       <ThemeContext.Provider value={themeValue}>
         <Routes />
       </ThemeContext.Provider>
-    </AuthContext.Provider>
+    </AuthProvider>
   );
 }
 

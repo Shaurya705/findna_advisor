@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import Header from 'components/ui/Header';
-import Sidebar from 'components/ui/Sidebar';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area, BarChart, Bar } from 'recharts';
 import Button from 'components/ui/Button';
 
@@ -12,7 +11,6 @@ const sample = [
 ];
 
 const AnalyticsReports = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [series, setSeries] = useState(sample);
   const [forecast, setForecast] = useState([]);
 
@@ -29,8 +27,7 @@ const AnalyticsReports = () => {
   return (
     <div>
       <Header />
-      <Sidebar isCollapsed={isCollapsed} onToggleCollapse={() => setIsCollapsed(v=>!v)} />
-      <main className={`pt-20 transition-all ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <main className="pt-20">
         <div className="max-w-6xl mx-auto p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>

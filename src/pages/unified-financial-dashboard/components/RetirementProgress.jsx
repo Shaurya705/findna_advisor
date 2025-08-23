@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
 const RetirementProgress = ({ retirementData, language = 'en' }) => {
+  const navigate = useNavigate();
+
   const content = {
     en: {
       title: 'Retirement Progress',
@@ -40,10 +43,10 @@ const RetirementProgress = ({ retirementData, language = 'en' }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'excellent': return 'text-success bg-success/10';
-      case 'onTrack': return 'text-primary bg-primary/10';
-      case 'needsAttention': return 'text-warning bg-warning/10';
-      default: return 'text-text-secondary bg-muted';
+      case 'excellent': return 'text-success bg-success/10 dark:bg-success/20';
+      case 'onTrack': return 'text-primary bg-primary/10 dark:bg-primary/20';
+      case 'needsAttention': return 'text-warning bg-warning/10 dark:bg-warning/20';
+      default: return 'text-text-secondary bg-muted dark:bg-muted/30';
     }
   };
 
@@ -60,21 +63,29 @@ const RetirementProgress = ({ retirementData, language = 'en' }) => {
   const status = getProgressStatus(progressPercentage);
 
   const handleViewPlan = () => {
-    console.log('Viewing retirement plan');
+    try {
+      navigate('/retirement-planning-lab');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
   const handleOptimize = () => {
-    console.log('Optimizing retirement plan');
+    try {
+      navigate('/retirement-planning-lab');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition-all duration-300">
+    <div className="bg-white dark:bg-surface dark:bg-opacity-90 rounded-xl border border-border dark:border-border dark:border-opacity-30 p-6 shadow-sm hover:shadow-md dark:shadow-black dark:shadow-opacity-20 transition-all duration-300">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-text-primary">
+          <h3 className="text-lg font-semibold text-text-primary dark:text-white">
             {content?.[language]?.title}
           </h3>
-          <p className="text-sm text-text-secondary">
+          <p className="text-sm text-text-secondary dark:text-text-secondary/80">
             {content?.[language]?.subtitle}
           </p>
         </div>

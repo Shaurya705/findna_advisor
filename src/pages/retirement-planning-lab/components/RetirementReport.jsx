@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
+import { computeRetirementProjections, formatCurrencyINR } from '../utils/calculations';
 
 const RetirementReport = ({ goalData, scenarioData }) => {
   const [reportType, setReportType] = useState('comprehensive');
@@ -14,20 +15,20 @@ const RetirementReport = ({ goalData, scenarioData }) => {
     { value: 'advisor', label: 'Advisor Consultation' }
   ];
 
-  const currentAge = parseInt(goalData?.currentAge || 30);
-  const retirementAge = parseInt(goalData?.retirementAge || 60);
+  const projections = useMemo(() => computeRetirementProjections(goalData, goalData?.riskTolerance || 'moderate'), [goalData]);
+  const currentAge = projections.currentAge;
+  const retirementAge = projections.retirementAge;
+  const yearsToRetirement = projections.yearsToRetirement;
   const monthlyExpenses = parseInt(goalData?.monthlyExpenses || 50000);
-  const yearsToRetirement = retirementAge - currentAge;
 
-  // Mock calculations
   const calculations = {
-    monthlyInvestment: 25000,
-    totalInvestment: 25000 * 12 * yearsToRetirement,
-    expectedCorpus: 25000 * 12 * yearsToRetirement * 2.5,
-    inflationAdjustedExpenses: monthlyExpenses * Math.pow(1.06, yearsToRetirement),
-    postRetirementIncome: 45000,
+    monthlyInvestment: Math.round(projections.monthlyInvestment),
+    totalInvestment: Math.round(projections.monthlyInvestment * 12 * yearsToRetirement),
+    expectedCorpus: Math.round(projections.finalCorpusRupees),
+    inflationAdjustedExpenses: projections.data?.[yearsToRetirement]?.inflationAdjustedExpenses || 0,
+    postRetirementIncome: Math.round((projections.finalCorpusRupees * 0.06) / 12), // 6% SWR monthly
     corpusShortfall: 0,
-    taxSavings: 78000
+    taxSavings: 78000 // placeholder
   };
 
   const assumptions = [
@@ -98,12 +99,7 @@ const RetirementReport = ({ goalData, scenarioData }) => {
     }
   };
 
-  const formatCurrency = (value) => {
-    if (value >= 10000000) return `₹${(value / 10000000)?.toFixed(1)}Cr`;
-    if (value >= 100000) return `₹${(value / 100000)?.toFixed(1)}L`;
-    if (value >= 1000) return `₹${(value / 1000)?.toFixed(0)}K`;
-    return `₹${value}`;
-  };
+  const formatCurrency = formatCurrencyINR;
 
   const getPriorityColor = (priority) => {
     switch (priority) {

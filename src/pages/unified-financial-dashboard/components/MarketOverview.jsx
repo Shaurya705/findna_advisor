@@ -34,13 +34,13 @@ const MarketOverview = ({ marketData, language = 'en' }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition-all duration-300">
+    <div className="bg-white dark:bg-surface dark:bg-opacity-90 rounded-xl border border-border dark:border-border dark:border-opacity-30 p-6 shadow-sm hover:shadow-md dark:shadow-black dark:shadow-opacity-20 transition-all duration-300">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-text-primary">
+          <h3 className="text-lg font-semibold text-text-primary dark:text-white">
             {content?.[language]?.title}
           </h3>
-          <p className="text-sm text-text-secondary">
+          <p className="text-sm text-text-secondary dark:text-text-secondary/80">
             {content?.[language]?.subtitle}
           </p>
         </div>

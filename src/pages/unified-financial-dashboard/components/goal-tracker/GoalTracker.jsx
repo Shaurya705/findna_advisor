@@ -1,0 +1,197 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import Icon from '../../../../components/AppIcon';
+import Button from '../../../../components/ui/Button';
+
+// Define the component with the correct name
+export function GoalTracker({ goals = [], language = 'en' }) {
+  const navigate = useNavigate();
+
+  const content = {
+    en: {
+      title: 'Goal Achievement Tracker',
+      subtitle: 'Track your financial milestones',
+      progress: 'Progress',
+      target: 'Target',
+      achieved: 'Achieved',
+      onTrack: 'On Track',
+      behindSchedule: 'Behind Schedule',
+      completed: 'Completed',
+      viewAll: 'View All Goals',
+      addGoal: 'Add New Goal'
+    },
+    hi: {
+      title: 'लक्ष्य उपलब्धि ट्रैकर',
+      subtitle: 'अपने वित्तीय मील के पत्थर ट्रैक करें',
+      progress: 'प्रगति',
+      target: 'लक्ष्य',
+      achieved: 'प्राप्त',
+      onTrack: 'सही राह पर',
+      behindSchedule: 'समय से पीछे',
+      completed: 'पूर्ण',
+      viewAll: 'सभी लक्ष्य देखें',
+      addGoal: 'नया लक्ष्य जोड़ें'
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return 'text-success bg-success bg-opacity-10 dark:bg-success dark:bg-opacity-20';
+      case 'onTrack': return 'text-primary bg-primary bg-opacity-10 dark:bg-primary dark:bg-opacity-20';
+      case 'behindSchedule': return 'text-warning bg-warning bg-opacity-10 dark:bg-warning dark:bg-opacity-20';
+      default: return 'text-text-secondary bg-muted dark:bg-muted dark:bg-opacity-30';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'completed': return 'CheckCircle';
+      case 'onTrack': return 'TrendingUp';
+      case 'behindSchedule': return 'Clock';
+      default: return 'Target';
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const handleAddGoal = () => {
+    try {
+      navigate('/retirement-planning-lab');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
+  const handleViewAllGoals = () => {
+    try {
+      navigate('/retirement-planning-lab');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-surface dark:bg-opacity-90 rounded-xl border border-border dark:border-border dark:border-opacity-30 p-6 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold text-text-primary dark:text-white">
+            {content?.[language]?.title}
+          </h3>
+          <p className="text-sm text-text-secondary dark:text-text-secondary dark:text-opacity-80">
+            {content?.[language]?.subtitle}
+          </p>
+        </div>
+        <div className="w-12 h-12 bg-gradient-growth rounded-lg flex items-center justify-center">
+          <Icon name="Target" size={24} color="white" strokeWidth={2} />
+        </div>
+      </div>
+      <div className="space-y-4">
+        {goals?.map((goal, index) => (
+          <div key={index} className="p-4 bg-surface-secondary dark:bg-surface-secondary dark:bg-opacity-40 rounded-lg border border-border border-opacity-50 dark:border-border dark:border-opacity-20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-primary bg-opacity-10 dark:bg-primary dark:bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <Icon name={goal?.icon} size={16} color="var(--color-primary)" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-text-primary dark:text-white">
+                    {goal?.name}
+                  </h4>
+                  <p className="text-xs text-text-secondary dark:text-text-secondary dark:text-opacity-80">
+                    {goal?.category}
+                  </p>
+                </div>
+              </div>
+              <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(goal?.status)}`}>
+                <div className="flex items-center space-x-1">
+                  <Icon name={getStatusIcon(goal?.status)} size={10} />
+                  <span>{content?.[language]?.[goal?.status]}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-text-secondary dark:text-text-secondary dark:text-opacity-80">
+                  {content?.[language]?.progress}
+                </span>
+                <span className="text-sm font-medium text-text-primary dark:text-white">
+                  {goal?.progressPercentage}%
+                </span>
+              </div>
+              <div className="w-full bg-muted dark:bg-muted dark:bg-opacity-50 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-500 ${
+                    goal?.status === 'completed' ? 'bg-success' : 
+                    goal?.status === 'onTrack' ? 'bg-primary' : 'bg-warning'
+                  }`}
+                  style={{ width: `${goal?.progressPercentage}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div>
+                  <div className="text-xs text-text-secondary dark:text-text-secondary dark:text-opacity-80">
+                    {content?.[language]?.achieved}
+                  </div>
+                  <div className="text-sm font-semibold text-text-primary dark:text-white">
+                    {formatCurrency(goal?.currentAmount)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-text-secondary dark:text-text-secondary dark:text-opacity-80">
+                    {content?.[language]?.target}
+                  </div>
+                  <div className="text-sm font-semibold text-text-primary dark:text-white">
+                    {formatCurrency(goal?.targetAmount)}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-text-secondary dark:text-text-secondary dark:text-opacity-80">
+                  {language === 'hi' ? 'समय सीमा' : 'Target Date'}
+                </div>
+                <div className="text-sm font-medium text-text-primary dark:text-white">
+                  {goal?.targetDate}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 flex space-x-3">
+        <Button
+          variant="outline"
+          fullWidth
+          iconName="Plus"
+          iconPosition="left"
+          iconSize={16}
+          onClick={handleAddGoal}
+          className="text-primary border-primary border-opacity-20 hover:bg-primary hover:bg-opacity-5 dark:border-primary dark:border-opacity-30 dark:hover:bg-primary dark:hover:bg-opacity-10"
+        >
+          {content?.[language]?.addGoal}
+        </Button>
+        <Button
+          variant="ghost"
+          fullWidth
+          iconName="ExternalLink"
+          iconPosition="right"
+          iconSize={16}
+          className="text-primary hover:bg-primary hover:bg-opacity-5 dark:hover:bg-primary dark:hover:bg-opacity-10"
+          onClick={handleViewAllGoals}
+        >
+          {content?.[language]?.viewAll}
+        </Button>
+      </div>
+    </div>
+  );
+}

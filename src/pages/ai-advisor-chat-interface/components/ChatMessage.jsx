@@ -48,6 +48,21 @@ const ChatMessage = ({ message, currentLanguage, onQuickAction }) => {
           <p className="text-sm leading-relaxed whitespace-pre-line">
             {message?.content}
           </p>
+
+          {/* FinBERT sentiment badge */}
+          {!isUser && message?.insights?.sentiment && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-white/60 border border-white/40">
+                <Icon name="Activity" size={12} className="text-gray-600" />
+                <span className="uppercase tracking-wide text-gray-700 font-semibold">
+                  {String(message.insights.sentiment.label || message.insights.sentiment.sentiment || 'neutral')}
+                </span>
+                {typeof message.insights.sentiment.score === 'number' && (
+                  <span className="text-gray-500">{(message.insights.sentiment.score * 100).toFixed(0)}%</span>
+                )}
+              </span>
+            </div>
+          )}
           
           {/* Quick Actions for AI messages */}
           {!isUser && message?.quickActions && (

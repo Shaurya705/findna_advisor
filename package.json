@@ -60,7 +60,8 @@
     "start": "vite",
     "build": "vite build --sourcemap",
     "serve": "vite preview",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:clean": "node dev-build.js"
   },
   "eslintConfig": {
     "extends": [

@@ -6,10 +6,11 @@ from ..db import get_db
 from ..models import User
 from ..security import verify_password, get_password_hash, create_access_token
 from ..config import settings
-from ..schemas import Token
+from ..schemas import Token, User as UserSchema
+from ..security import get_current_user
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 # Seed demo user on first dependency call
 seeded = False
@@ -18,11 +19,16 @@ def seed_user(db: Session):
     global seeded
     if seeded:
         return
-    user = db.query(User).filter(User.email == "demo@findna.ai").first()
-    if not user:
-        user = User(email="demo@findna.ai", hashed_password=get_password_hash("demo123"), role="admin")
-        db.add(user)
-        db.commit()
+    demo_users = [
+        ("demo@findna.ai", "demo123", "admin"),
+        ("demo@finvoice.ai", "demo123", "user"),
+    ]
+    for email, password, role in demo_users:
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            user = User(email=email, hashed_password=get_password_hash(password), role=role)
+            db.add(user)
+            db.commit()
     seeded = True
 
 @router.post("/token", response_model=Token)
@@ -32,5 +38,20 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     access_token_expires = timedelta(minutes=settings.jwt_expire_minutes)
-    access_token = create_access_token(subject=str(user.id), expires_delta=access_token_expires)
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Use email as JWT subject so downstream can resolve user correctly
+    access_token = create_access_token(subject=user.email, expires_delta=access_token_expires)
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": int(access_token_expires.total_seconds()),
+        "user_info": {
+            "id": user.id,
+            "email": user.email,
+            "role": user.role,
+        },
+    }
+
+@router.get("/me", response_model=UserSchema)
+def me(current_user: User = Depends(get_current_user)):
+    """Return current authenticated user."""
+    return current_user

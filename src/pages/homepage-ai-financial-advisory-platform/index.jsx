@@ -5,6 +5,7 @@ import TrustSection from './components/TrustSection';
 import FeaturesGrid from './components/FeaturesGrid';
 import SocialProofSection from './components/SocialProofSection';
 import ConversionSection from './components/ConversionSection';
+import Header from '../../components/ui/Header';
 
 const HomepageAIFinancialAdvisoryPlatform = () => {
   useEffect(() => {
@@ -28,20 +29,14 @@ const HomepageAIFinancialAdvisoryPlatform = () => {
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        {/* Hero Section with AI Demo */}
-        <HeroSection />
-
-        {/* Trust Building Section */}
-        <TrustSection />
-
-        {/* Core Features Grid */}
-        <FeaturesGrid />
-
-        {/* Social Proof & Testimonials */}
-        <SocialProofSection />
-
-        {/* Conversion Flow - Financial DNA Assessment */}
-        <ConversionSection />
+        <Header />
+        <main className="pt-16">
+          <HeroSection />
+          <TrustSection />
+          <FeaturesGrid />
+          <SocialProofSection />
+          <ConversionSection />
+        </main>
       </div>
     </>
   );

@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
 const AIInsightsPanel = ({ insights, language = 'en' }) => {
+  const navigate = useNavigate();
+
   const content = {
     en: {
       title: 'AI Insights & Recommendations',
@@ -45,32 +48,44 @@ const AIInsightsPanel = ({ insights, language = 'en' }) => {
   };
 
   const handleImplement = (insightId) => {
-    console.log(`Implementing insight: ${insightId}`);
+    try {
+      navigate('/ai-advisor-chat-interface');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
+  const handleViewAll = () => {
+    try {
+      navigate('/ai-advisor-chat-interface');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition-all duration-300">
+    <div className="bg-white dark:bg-surface dark:bg-opacity-90 rounded-xl border border-border dark:border-border dark:border-opacity-30 p-6 shadow-sm hover:shadow-md dark:shadow-black dark:shadow-opacity-20 transition-all duration-300">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-semibold text-text-primary">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-text-primary dark:text-white mb-1">
             {content?.[language]?.title}
           </h3>
-          <p className="text-sm text-text-secondary">
+          <p className="text-sm text-text-secondary dark:text-text-secondary/80">
             {content?.[language]?.subtitle}
           </p>
         </div>
-        <div className="w-12 h-12 bg-gradient-cultural rounded-lg flex items-center justify-center">
+        <div className="w-12 h-12 bg-gradient-cultural rounded-lg flex items-center justify-center flex-shrink-0">
           <Icon name="Brain" size={24} color="white" strokeWidth={2} />
         </div>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-5">
         {insights?.map((insight, index) => (
-          <div key={index} className="p-4 bg-surface-secondary rounded-lg border border-border/50">
-            <div className="flex items-start justify-between mb-3">
+          <div key={index} className="p-5 bg-surface-secondary rounded-xl border border-border/50 hover:shadow-sm transition-all duration-200">
+            <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(insight?.priority)}`}>
+                <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(insight?.priority)}`}>
                   <div className="flex items-center space-x-1">
-                    <Icon name={getPriorityIcon(insight?.priority)} size={10} />
+                    <Icon name={getPriorityIcon(insight?.priority)} size={12} />
                     <span>{content?.[language]?.[insight?.priority]}</span>
                   </div>
                 </div>
@@ -84,7 +99,7 @@ const AIInsightsPanel = ({ insights, language = 'en' }) => {
             </div>
 
             <div className="mb-4">
-              <h4 className="font-semibold text-text-primary mb-2">
+              <h4 className="font-semibold text-text-primary mb-3 leading-tight">
                 {insight?.title}
               </h4>
               <p className="text-sm text-text-secondary leading-relaxed">
@@ -124,7 +139,7 @@ const AIInsightsPanel = ({ insights, language = 'en' }) => {
           </div>
         ))}
       </div>
-      <div className="mt-6">
+      <div className="mt-6 pt-4 border-t border-border">
         <Button
           variant="ghost"
           fullWidth
@@ -132,6 +147,7 @@ const AIInsightsPanel = ({ insights, language = 'en' }) => {
           iconPosition="right"
           iconSize={16}
           className="text-primary hover:bg-primary/5"
+          onClick={handleViewAll}
         >
           {content?.[language]?.viewAll}
         </Button>
